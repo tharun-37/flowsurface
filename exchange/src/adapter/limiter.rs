@@ -128,10 +128,14 @@ impl DynamicBucket {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default();
 
-        let period_seconds = self.refill_rate.as_secs();
-        let seconds_in_period = current_time.as_secs() % period_seconds;
-        let wait_time = Duration::from_secs(period_seconds - seconds_in_period)
-            .saturating_add(Duration::from_millis(500));
+        let period_millis = self.refill_rate.as_millis() as u64;
+        let millis_in_period = if period_millis > 0 {
+            current_time.as_millis() as u64 % period_millis
+        } else {
+            0
+        };
+        let remaining_millis = period_millis.saturating_sub(millis_in_period);
+        let wait_time = Duration::from_millis(remaining_millis.saturating_add(50));
 
         (Some(wait_time), Some(DynamicLimitReason::HeaderRate))
     }

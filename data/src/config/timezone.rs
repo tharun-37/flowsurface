@@ -1,12 +1,14 @@
-use chrono::{DateTime, Datelike, Months, TimeZone};
+use chrono::{DateTime, Datelike, FixedOffset, Months, TimeZone};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
 const ORIGIN_YEAR: i32 = 2000;
+const IST_OFFSET_SECS: i32 = 5 * 3600 + 30 * 60; // UTC+05:30
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum UserTimezone {
     #[default]
+    Ist,
     Utc,
     Local,
 }
@@ -61,6 +63,10 @@ impl UserTimezone {
         formatter: impl FnOnce(DateTime<chrono::FixedOffset>) -> T,
     ) -> T {
         let time_with_zone = match self {
+            UserTimezone::Ist => {
+                let offset = FixedOffset::east_opt(IST_OFFSET_SECS).unwrap_or(FixedOffset::east_opt(0).unwrap());
+                datetime.with_timezone(&offset)
+            }
             UserTimezone::Local => datetime.with_timezone(&chrono::Local).fixed_offset(),
             UserTimezone::Utc => datetime.fixed_offset(),
         };
@@ -80,7 +86,7 @@ impl UserTimezone {
         let interval = timeframe.to_milliseconds();
 
         if interval < 10_000 {
-            datetime.format("%M:%S").to_string()
+            datetime.format("%H:%M:%S").to_string()
         } else {
             datetime.format("%H:%M").to_string()
         }
@@ -89,6 +95,10 @@ impl UserTimezone {
     /// The calendar date of `datetime` in the user's timezone.
     fn local_date(&self, datetime: DateTime<chrono::Utc>) -> chrono::NaiveDate {
         match self {
+            UserTimezone::Ist => {
+                let offset = FixedOffset::east_opt(IST_OFFSET_SECS).unwrap_or(FixedOffset::east_opt(0).unwrap());
+                datetime.with_timezone(&offset).date_naive()
+            }
             UserTimezone::Utc => datetime.date_naive(),
             UserTimezone::Local => datetime.with_timezone(&chrono::Local).date_naive(),
         }
@@ -100,6 +110,13 @@ impl UserTimezone {
     pub(crate) fn local_midnight_utc_ms(&self, date: chrono::NaiveDate) -> Option<u64> {
         let midnight = date.and_hms_opt(0, 0, 0)?;
         let utc = match self {
+            UserTimezone::Ist => {
+                let offset = FixedOffset::east_opt(IST_OFFSET_SECS)?;
+                offset
+                    .from_local_datetime(&midnight)
+                    .earliest()?
+                    .with_timezone(&chrono::Utc)
+            }
             UserTimezone::Utc => midnight.and_utc(),
             UserTimezone::Local => chrono::Local
                 .from_local_datetime(&midnight)
@@ -202,6 +219,7 @@ fn advance_to_grid(step: u64, offset: i64) -> u64 {
 impl fmt::Display for UserTimezone {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            UserTimezone::Ist => write!(f, "IST (UTC +05:30)"),
             UserTimezone::Utc => write!(f, "UTC"),
             UserTimezone::Local => {
                 let local_offset = chrono::Local::now().offset().local_minus_utc();
@@ -220,6 +238,7 @@ impl<'de> Deserialize<'de> for UserTimezone {
     {
         let timezone_str = String::deserialize(deserializer)?;
         match timezone_str.to_lowercase().as_str() {
+            "ist" => Ok(UserTimezone::Ist),
             "utc" => Ok(UserTimezone::Utc),
             "local" => Ok(UserTimezone::Local),
             _ => Err(serde::de::Error::custom("Invalid UserTimezone")),
@@ -233,6 +252,7 @@ impl Serialize for UserTimezone {
         S: serde::Serializer,
     {
         match self {
+            UserTimezone::Ist => serializer.serialize_str("IST"),
             UserTimezone::Utc => serializer.serialize_str("UTC"),
             UserTimezone::Local => serializer.serialize_str("Local"),
         }

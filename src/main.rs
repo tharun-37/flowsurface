@@ -922,7 +922,11 @@ impl Flowsurface {
                     ));
 
                     let timezone_picklist = pick_list(
-                        [data::UserTimezone::Utc, data::UserTimezone::Local],
+                        [
+                            data::UserTimezone::Ist,
+                            data::UserTimezone::Local,
+                            data::UserTimezone::Utc,
+                        ],
                         Some(self.timezone),
                         Message::SetTimezone,
                     );

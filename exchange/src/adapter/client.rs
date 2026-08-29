@@ -328,12 +328,7 @@ impl AdapterHandles {
                 }
                 Ok(out)
             }
-            Venue::Okex => {
-                let Some(handle) = self.okex.as_ref() else {
-                    return Err(Self::missing_venue_error(venue));
-                };
-                handle.fetch_ticker_metadata(markets.to_vec()).await
-            }
+            Venue::Okex => Ok(HashMap::default()),
             Venue::Mexc => {
                 let Some(handle) = self.mexc.as_ref() else {
                     return Err(Self::missing_venue_error(venue));
@@ -396,12 +391,7 @@ impl AdapterHandles {
                 }
                 Ok(out)
             }
-            Venue::Okex => {
-                let Some(handle) = self.okex.as_ref() else {
-                    return Err(Self::missing_venue_error(venue));
-                };
-                handle.fetch_ticker_stats(markets.to_vec()).await
-            }
+            Venue::Okex => Ok(HashMap::default()),
             Venue::Mexc => {
                 let Some(handle) = self.mexc.as_ref() else {
                     return Err(Self::missing_venue_error(venue));
@@ -440,12 +430,7 @@ impl AdapterHandles {
                 };
                 handle.fetch_klines(ticker_info, timeframe, range).await
             }
-            Venue::Okex => {
-                let Some(handle) = self.okex.as_ref() else {
-                    return Err(Self::missing_venue_error(venue));
-                };
-                handle.fetch_klines(ticker_info, timeframe, range).await
-            }
+            Venue::Okex => Ok(Vec::new()),
             Venue::Mexc => {
                 let Some(handle) = self.mexc.as_ref() else {
                     return Err(Self::missing_venue_error(venue));
@@ -480,14 +465,7 @@ impl AdapterHandles {
                     .fetch_open_interest(ticker_info, timeframe, range)
                     .await
             }
-            Exchange::OkexLinear | Exchange::OkexInverse => {
-                let Some(handle) = self.okex.as_ref() else {
-                    return Err(Self::missing_venue_error(exchange.venue()));
-                };
-                handle
-                    .fetch_open_interest(ticker_info, timeframe, range)
-                    .await
-            }
+            Exchange::OkexLinear | Exchange::OkexInverse => Ok(Vec::new()),
             _ => Err(AdapterError::InvalidRequest(format!(
                 "Open interest data not available for {exchange}"
             ))),

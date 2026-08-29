@@ -261,11 +261,10 @@ pub enum Venue {
 }
 
 impl Venue {
-    pub const ALL: [Venue; 5] = [
+    pub const ALL: [Venue; 4] = [
         Venue::Bybit,
         Venue::Binance,
         Venue::Hyperliquid,
-        Venue::Okex,
         Venue::Mexc,
     ];
 }
@@ -357,7 +356,7 @@ impl FromStr for Exchange {
 }
 
 impl Exchange {
-    pub const ALL: [Exchange; 14] = [
+    pub const ALL: [Exchange; 11] = [
         Exchange::BinanceLinear,
         Exchange::BinanceInverse,
         Exchange::BinanceSpot,
@@ -366,9 +365,6 @@ impl Exchange {
         Exchange::BybitSpot,
         Exchange::HyperliquidLinear,
         Exchange::HyperliquidSpot,
-        Exchange::OkexLinear,
-        Exchange::OkexInverse,
-        Exchange::OkexSpot,
         Exchange::MexcLinear,
         Exchange::MexcInverse,
         Exchange::MexcSpot,

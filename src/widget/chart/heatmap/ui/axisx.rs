@@ -261,27 +261,41 @@ impl<'a> canvas::Program<Message> for AxisXLabelCanvas<'a> {
                     })
             };
 
-            let every = {
+            let step_ms = {
                 let px_per_bucket = (col_f * cam_sx_f).max(1e-9);
-                let rough = (TARGET_LABEL_SPACING_PX as f64 / px_per_bucket)
-                    .ceil()
-                    .max(1.0);
-                data::util::round_125(rough) as i64
+                let rough_buckets = (TARGET_LABEL_SPACING_PX as f64 / px_per_bucket).max(1.0);
+                let rough_ms = (rough_buckets * (aggr_time_ms as f64)) as i64;
+
+                const CANDIDATE_STEPS_MS: &[i64] = &[
+                    100, 200, 500, 1_000, 2_000, 5_000, 10_000, 15_000, 30_000,
+                    60_000, 120_000, 300_000, 600_000, 900_000, 1_800_000, 3_600_000,
+                    7_200_000, 14_400_000, 28_800_000, 43_200_000, 86_400_000,
+                ];
+
+                CANDIDATE_STEPS_MS
+                    .iter()
+                    .copied()
+                    .find(|&step| step >= rough_ms)
+                    .unwrap_or_else(|| CANDIDATE_STEPS_MS[CANDIDATE_STEPS_MS.len() - 1])
             };
 
-            let mut b = (b_min.div_euclid(every)) * every;
-            if b < b_min {
-                b += every;
+            let t_min_ms = b_min.saturating_mul(aggr_time_ms);
+            let t_max_ms = b_max.saturating_mul(aggr_time_ms);
+
+            let mut cur_t_ms = (t_min_ms.div_euclid(step_ms)) * step_ms;
+            if cur_t_ms < t_min_ms {
+                cur_t_ms += step_ms;
             }
 
-            while b <= b_max {
-                let rel = b - latest_bucket;
+            while cur_t_ms <= t_max_ms {
+                let bucket = (cur_t_ms as f64 / aggr_time_ms as f64).round() as i64;
+                let rel = bucket - latest_bucket;
 
                 let world_x = ((rel as f64) - phase) * col_f;
                 let x_px = world_to_screen_x(world_x);
 
                 if x_px >= -draw_margin_px && x_px <= (vw + draw_margin_px) {
-                    let t_ms = b.saturating_mul(aggr_time_ms);
+                    let t_ms = cur_t_ms;
 
                     if let Some(label) = self
                         .timezone
@@ -297,8 +311,8 @@ impl<'a> canvas::Program<Message> for AxisXLabelCanvas<'a> {
                                 && (x_px - tick_half - TICK_CURSOR_GAP_PX)
                                     <= (cursor_label.x_px + cursor_half)
                             {
-                                b = b.saturating_add(every);
-                                if every <= 0 {
+                                cur_t_ms = cur_t_ms.saturating_add(step_ms);
+                                if step_ms <= 0 {
                                     break;
                                 }
                                 continue;
@@ -318,8 +332,8 @@ impl<'a> canvas::Program<Message> for AxisXLabelCanvas<'a> {
                     }
                 }
 
-                b = b.saturating_add(every);
-                if every <= 0 {
+                cur_t_ms = cur_t_ms.saturating_add(step_ms);
+                if step_ms <= 0 {
                     break;
                 }
             }

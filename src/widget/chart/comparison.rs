@@ -17,8 +17,6 @@ use iced::{
 };
 use iced_core::renderer::Quad;
 
-use chrono::TimeZone;
-
 const Y_AXIS_GUTTER: f32 = 66.0; // px
 const X_AXIS_HEIGHT: f32 = 24.0;
 
@@ -675,22 +673,11 @@ where
 
     fn format_crosshair_time(ts_ms: u64, tz: UserTimezone) -> String {
         let ts_i64 = ts_ms as i64;
-        match tz {
-            UserTimezone::Utc => {
-                if let Some(dt) = chrono::Utc.timestamp_millis_opt(ts_i64).single() {
-                    dt.format("%a %b %-d %H:%M").to_string()
-                } else {
-                    ts_ms.to_string()
-                }
-            }
-            UserTimezone::Local => {
-                if let Some(dt) = chrono::Local.timestamp_millis_opt(ts_i64).single() {
-                    dt.format("%a %b %-d %H:%M").to_string()
-                } else {
-                    ts_ms.to_string()
-                }
-            }
-        }
+        tz.format_with_kind(
+            ts_i64,
+            data::config::timezone::TimeLabelKind::Crosshair { show_millis: false },
+        )
+        .unwrap_or_else(|| ts_ms.to_string())
     }
 }
 

@@ -11,8 +11,8 @@ use std::time::Duration;
 pub mod fetch;
 pub mod stream;
 
-const WS_DOMAIN: &str = "ws.okx.com";
-const REST_API_BASE: &str = "https://www.okx.com/api/v5";
+const WS_DOMAIN: &str = "127.0.0.1";
+const REST_API_BASE: &str = "http://127.0.0.1";
 const LIMIT: usize = 20;
 const REFILL_RATE: Duration = Duration::from_secs(2);
 const LIMITER_BUFFER_PCT: f32 = 0.05;
@@ -80,12 +80,14 @@ pub type OkexLimiter = crate::adapter::limiter::FixedWindowRateLimiter;
 
 type OkexCommand = super::FetchCommand<Vec<MarketKind>>;
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct OkexHandle {
     request_port: RequestPort<OkexCommand>,
     proxy_cfg: Option<crate::proxy::Proxy>,
 }
 
+#[allow(dead_code)]
 impl OkexHandle {
     pub fn new(
         client: reqwest::Client,

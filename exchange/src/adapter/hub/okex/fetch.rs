@@ -13,6 +13,21 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 pub(super) async fn fetch_ticker_metadata(
+    _hub: &mut HttpHub<OkexLimiter>,
+    _markets: &[MarketKind],
+) -> Result<super::super::TickerMetadataMap, AdapterError> {
+    Ok(HashMap::new())
+}
+
+pub(super) async fn fetch_ticker_stats(
+    _hub: &mut HttpHub<OkexLimiter>,
+    _markets: &[MarketKind],
+) -> Result<super::super::TickerStatsMap, AdapterError> {
+    Ok(HashMap::new())
+}
+
+#[allow(dead_code)]
+async fn fetch_ticker_metadata_disabled(
     hub: &mut HttpHub<OkexLimiter>,
     markets: &[MarketKind],
 ) -> Result<super::super::TickerMetadataMap, AdapterError> {
@@ -126,7 +141,8 @@ pub(super) async fn fetch_ticker_metadata(
     Ok(map)
 }
 
-pub(super) async fn fetch_ticker_stats(
+#[allow(dead_code)]
+async fn fetch_ticker_stats_disabled(
     hub: &mut HttpHub<OkexLimiter>,
     markets: &[MarketKind],
 ) -> Result<super::super::TickerStatsMap, AdapterError> {

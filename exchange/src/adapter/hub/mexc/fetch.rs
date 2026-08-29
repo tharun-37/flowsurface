@@ -424,7 +424,7 @@ pub(super) async fn fetch_klines(
                 .map(|kline| {
                     let volume = qty_norm.normalize_qty(kline.vol, kline.close);
                     Ok(Kline::new(
-                        kline.close_ts,
+                        kline.open_ts,
                         kline.open,
                         kline.high,
                         kline.low,
